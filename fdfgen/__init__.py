@@ -27,22 +27,22 @@ def smart_encode_str(s):
         utf16 = s.encode('utf_16_be')
     except AttributeError:  # ints and floats
         utf16 = str(s).encode('utf_16_be')
-    safe = utf16.replace(b'\x00)', b'\x00\\)').replace(b'\x00(', b'\x00\\(')
-    return b''.join((codecs.BOM_UTF16_BE, safe))
+    safe = utf16.replace('\x00)', '\x00\\)').replace('\x00(', '\x00\\(')
+    return ''.join((codecs.BOM_UTF16_BE, safe))
 
 
 def handle_hidden(key, fields_hidden):
     if key in fields_hidden:
-        return b"/SetF 2"
+        return "/SetF 2"
     else:
-        return b"/ClrF 2"
+        return "/ClrF 2"
 
 
 def handle_readonly(key, fields_readonly):
     if key in fields_readonly:
-        return b"/SetFf 1"
+        return "/SetFf 1"
     else:
-        return b"/ClrFf 1"
+        return "/ClrFf 1"
 
 
 def handle_data_strings(fdf_data_strings, fields_hidden, fields_readonly,
@@ -58,21 +58,21 @@ def handle_data_strings(fdf_data_strings, fields_hidden, fields_readonly,
             if PY3:
                 value = value.encode('utf-8')
         elif value is False:
-            value = b'/Off'
+            value = '/Off'
         else:
-            value = b''.join([b'(', smart_encode_str(value), b')'])
+            value = ''.join(['(', smart_encode_str(value), ')'])
 
-        yield b''.join([
-            b'<<',
-            b'/T(',
+        yield ''.join([
+            '<<',
+            '/T(',
             key,
-            b')',
-            b'/V',
+            ')',
+            '/V',
             value,
             handle_hidden(key, fields_hidden),
-            b'',
+            '',
             handle_readonly(key, fields_readonly),
-            b'>>',
+            '>>',
         ])
 
 
@@ -81,15 +81,15 @@ def handle_data_names(fdf_data_names, fields_hidden, fields_readonly):
         fdf_data_names = fdf_data_names.items()
 
     for (key, value) in fdf_data_names:
-        yield b''.join([b'<<\x0a/V /', smart_encode_str(value), b'\x0a/T (',
-                        smart_encode_str(key), b')\x0a',
-                        handle_hidden(key, fields_hidden), b'\x0a',
-                        handle_readonly(key, fields_readonly), b'\x0a>>\x0a'])
+        yield ''.join(['<<\x0a/V /', smart_encode_str(value), '\x0a/T (',
+                        smart_encode_str(key), ')\x0a',
+                        handle_hidden(key, fields_hidden), '\x0a',
+                        handle_readonly(key, fields_readonly), '\x0a>>\x0a'])
 
 
 def forge_fdf(pdf_form_url=None, fdf_data_strings=[], fdf_data_names=[],
               fields_hidden=[], fields_readonly=[],
-              checkbox_checked_name=b"Yes"):
+              checkbox_checked_name="Yes"):
     """Generates fdf string from fields specified
 
     * pdf_form_url (default: None): just the url for the form.
@@ -110,22 +110,22 @@ def forge_fdf(pdf_form_url=None, fdf_data_strings=[], fdf_data_names=[],
     The result is a string suitable for writing to a .fdf file.
 
     """
-    fdf = [b'%FDF-1.2\x0a%\xe2\xe3\xcf\xd3\x0d\x0a']
-    fdf.append(b'1 0 obj\x0a<</FDF')
-    fdf.append(b'<</Fields[')
-    fdf.append(b''.join(handle_data_strings(fdf_data_strings,
+    fdf = ['%FDF-1.2\x0a%\xe2\xe3\xcf\xd3\x0d\x0a']
+    fdf.append('1 0 obj\x0a<</FDF')
+    fdf.append('<</Fields[')
+    fdf.append(''.join(handle_data_strings(fdf_data_strings,
                                             fields_hidden, fields_readonly,
                                             checkbox_checked_name)))
-    fdf.append(b''.join(handle_data_names(fdf_data_names,
+    fdf.append(''.join(handle_data_names(fdf_data_names,
                                           fields_hidden, fields_readonly)))
     if pdf_form_url:
-        fdf.append(b''.join(b'/F (', smart_encode_str(pdf_form_url), b')\x0a'))
-    fdf.append(b']\x0a')
-    fdf.append(b'>>\x0a')
-    fdf.append(b'>>\x0aendobj\x0a')
-    fdf.append(b'trailer\x0a\x0a<<\x0a/Root 1 0 R\x0a>>\x0a')
-    fdf.append(b'%%EOF\x0a\x0a')
-    return b''.join(fdf)
+        fdf.append(''.join('/F (', smart_encode_str(pdf_form_url), ')\x0a'))
+    fdf.append(']\x0a')
+    fdf.append('>>\x0a')
+    fdf.append('>>\x0aendobj\x0a')
+    fdf.append('trailer\x0a\x0a<<\x0a/Root 1 0 R\x0a>>\x0a')
+    fdf.append('%%EOF\x0a\x0a')
+    return ''.join(fdf)
 
 
 if __name__ == "__main__":
